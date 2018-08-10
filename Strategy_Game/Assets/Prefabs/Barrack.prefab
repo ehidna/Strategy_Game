@@ -21,7 +21,7 @@ GameObject:
   - component: {fileID: 4500864656671144}
   m_Layer: 0
   m_Name: Barrack
-  m_TagString: Untagged
+  m_TagString: Building
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -54,7 +54,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4587590313655262}
   - component: {fileID: 212229359527800154}
-  - component: {fileID: 61122441771003080}
+  - component: {fileID: 61823897214248110}
   m_Layer: 0
   m_Name: Sprite
   m_TagString: Untagged
@@ -69,7 +69,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1236033115758496}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -11.5, y: -5.5, z: 0}
+  m_LocalPosition: {x: -14.356792, y: -5.4175215, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 4587590313655262}
@@ -132,7 +132,7 @@ MeshFilter:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1242170456923738}
   m_Mesh: {fileID: 0}
---- !u!61 &61122441771003080
+--- !u!61 &61823897214248110
 BoxCollider2D:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
@@ -148,7 +148,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 3.0000007, y: 3.0000007}
+    oldSize: {x: 3, y: 3}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -207,7 +207,7 @@ MonoBehaviour:
   m_fontSizeBase: 2
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 3
+  m_fontSizeMin: 2
   m_fontSizeMax: 7
   m_fontStyle: 1
   m_textAlignment: 514
