@@ -7,6 +7,8 @@ public class Deneme : MonoBehaviour {
     
     public Grid grid;
     public TileBase tbase;
+    private SpriteRenderer spriteRenderer;
+    private Color storeColor;
 
     bool isSelected;
 
@@ -21,8 +23,6 @@ public class Deneme : MonoBehaviour {
 
     // 0 for ground, 1 for empty or has collider
     private byte[,] cells;
-    // Storing last known position
-    Vector3Int storeLKP = new Vector3Int();
 
     // Use this for initialization
     void Start () {
@@ -33,6 +33,8 @@ public class Deneme : MonoBehaviour {
         draggingPreb = Instantiate(barrackPreb);
         Destroy(draggingPreb.GetComponentInChildren<Collider2D>());
         draggingPreb.SetActive(false);
+        spriteRenderer = draggingPreb.GetComponentInChildren<SpriteRenderer>();
+        storeColor = spriteRenderer.color;
 
         cells = new byte[size, size];
 
@@ -56,20 +58,19 @@ public class Deneme : MonoBehaviour {
     // Update is called once per frame
     void Update()
     {
+        
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector3Int gridPos = grid.WorldToCell(mousePos);
         mousePos.z = 0;
 
-        //Right mouse button for selecting barrack
-        bool isplaceable = CheckNeighbor(gridPos);
-
         // No buildings selected
         if (!isSelected)
         {
-            if (isplaceable && Input.GetMouseButtonUp(1))
+            //Right mouse button for selecting barrack
+            if (Input.GetMouseButtonUp(1))
             {
                 isSelected = true;
-                draggingPreb.transform.position = mousePos;
+                draggingPreb.transform.position = gridPos;
                 draggingPreb.SetActive(isSelected);
             }
 
@@ -86,21 +87,29 @@ public class Deneme : MonoBehaviour {
         }
         else
         {
-            if (Input.GetMouseButtonDown(0))
+            bool isplaceable = CheckNeighbor(gridPos);
+            if (isplaceable && Input.GetMouseButtonDown(0))
             {
-                if (CheckNeighbor(storeLKP))
-                {
-                    CreateBarrack();
-                }
+                //if (CheckNeighbor(gridPos))
+                //{
+                    CreateBarrack(gridPos);
+                //}
                 isSelected = false;
                 draggingPreb.SetActive(isSelected);
+                spriteRenderer.color = storeColor;
             }
-
-            // Checking for available places to barrack
-            if (HasMouseMoved() && isplaceable)
+            if(HasMouseMoved())
             {
                 draggingPreb.transform.position = gridPos;
-                storeLKP = gridPos;
+                // Checking for available places to barrack
+                if (isplaceable)
+                {
+                    spriteRenderer.color = Color.green;
+                }
+                else
+                {
+                    spriteRenderer.color = Color.red;
+                }
             }
         }
     }
@@ -140,15 +149,15 @@ public class Deneme : MonoBehaviour {
     }
 
     // GameObject obj, Vector3Int pos, int width, int height
-    void CreateBarrack()
+    void CreateBarrack(Vector3Int pos)
     {
-        GameObject _obj = Instantiate(barrackPreb, storeLKP, Quaternion.identity);
+        GameObject _obj = Instantiate(barrackPreb, pos, Quaternion.identity);
         _obj.transform.parent = grid.transform.GetChild(1);
         for (int i = -1; i < 2; i++)
         {
             for (int j = -1; j < 2; j++)
             {
-                cells[storeLKP.x + i + size / 2, storeLKP.y + j + size / 2] = 1;
+                cells[pos.x + i + size / 2, pos.y + j + size / 2] = 1;
             }
         }
     }
