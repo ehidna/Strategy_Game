@@ -396,7 +396,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1520223854}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -0.5, y: -0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 567707309}
@@ -538,8 +538,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   grid: {fileID: 567707308}
-  tbase: {fileID: 11400000, guid: 1c89724fcf3234308b337c6f0e69da57, type: 2}
-  size: 100
+  ground: {fileID: 11400000, guid: d4f412240d7974580928bfe54c84af35, type: 2}
+  redGround: {fileID: 11400000, guid: 333fe69ec51694ce29a896b53f8c9138, type: 2}
+  mapSizeX: 20
+  mapSizeY: 20
+  tilemap: {fileID: 0}
   SoldierPreb: {fileID: 1448486509638420, guid: 0550bddc7ae7a4d3a97ae89c1685d13f,
     type: 2}
   barrackPreb: {fileID: 1236033115758496, guid: d34be5236e3dc4a10b598124af129d4e,

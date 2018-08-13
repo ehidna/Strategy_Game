@@ -6,27 +6,27 @@ using UnityEngine.Tilemaps;
 public class Deneme : MonoBehaviour {
     
     public Grid grid;
-    public TileBase tbase;
+    public GridMap gridMap;
+    public TileBase ground;
+    public TileBase redGround;
     private SpriteRenderer spriteRenderer;
     private Color storeColor;
 
     bool isSelected;
 
-    public int size;
+    public int mapSizeX;
+    public int mapSizeY;
 
-    public float EPSILON { get; private set; }
-    Tilemap tilemap;
+    public Tilemap tilemap;
 
     public GameObject SoldierPreb;
     public GameObject barrackPreb;
     private GameObject draggingPreb;
 
-    // 0 for ground, 1 for empty or has collider
-    private byte[,] cells;
-
     // Use this for initialization
     void Start () {
         Application.targetFrameRate = 60;
+        Camera.main.transform.position = new Vector3(mapSizeX / 2, mapSizeY / 2, -10);
 
         tilemap = grid.GetComponentInChildren<Tilemap>();
 
@@ -36,45 +36,67 @@ public class Deneme : MonoBehaviour {
         spriteRenderer = draggingPreb.GetComponentInChildren<SpriteRenderer>();
         storeColor = spriteRenderer.color;
 
-        cells = new byte[size, size];
-
         tilemap.ClearAllTiles();
         SetTiles();
-	}
+    }
 
     void SetTiles()
     {
-        // arrays cant be negative, we are adding half of the map size ( size/2 ) to solve this problem
-        for (int i = -size / 2; i < size / 2; i++)
+        // set true all tiles to walkable
+        bool[,] tilesMap = new bool[mapSizeX, mapSizeY];
+        for (int i = 0; i < mapSizeX; i++)
         {
-            for (int j = -size / 2; j < size / 2; j++)
+            for (int j = 0; j < mapSizeY; j++)
             {
-                tilemap.SetTile(new Vector3Int(i, j, 0), tbase);
-                cells[i + size / 2, j + size / 2] = 0;
+                tilemap.SetTile(new Vector3Int(i, j, 0), ground);
+                tilesMap[i, j] = true;
             }
         }
+        gridMap = new GridMap(tilesMap);
     }
 
     // Update is called once per frame
     void Update()
-    {
-        
+    {      
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            MovementSoldier[] soldiers = FindObjectsOfType<MovementSoldier>();
+            foreach (var item in soldiers)
+            {
+                item.enabled = false;
+            }
+
+            for (int i = 0; i < mapSizeX; i++)
+            {
+                for (int j = 0; j < mapSizeY; j++)
+                {
+                    if (!gridMap.nodes[i, j].walkable)
+                        tilemap.SetTile(new Vector3Int(i, j, 0), redGround);
+                    else
+                        tilemap.SetTile(new Vector3Int(i, j, 0), ground);
+
+                }
+            }
+
+        }
+
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector3Int gridPos = grid.WorldToCell(mousePos);
         mousePos.z = 0;
 
-        // No buildings selected
+        // No building selected
         if (!isSelected)
         {
             //Right mouse button for selecting barrack
-            if (Input.GetMouseButtonUp(1))
+            if (Input.GetMouseButtonDown(1))
             {
                 isSelected = true;
                 draggingPreb.transform.position = gridPos;
                 draggingPreb.SetActive(isSelected);
             }
 
-            // Produce soldier to best nearest fit place for barrack
+            // Produce soldier to best nearest fit place to the barrack
             if (Input.GetMouseButtonDown(0))
             {
                 RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
@@ -87,29 +109,26 @@ public class Deneme : MonoBehaviour {
         }
         else
         {
+            // Checking for available places to buildings
             bool isplaceable = CheckNeighbor(gridPos);
-            if (isplaceable && Input.GetMouseButtonDown(0))
+            if (isplaceable)
             {
-                //if (CheckNeighbor(gridPos))
-                //{
-                    CreateBarrack(gridPos);
-                //}
-                isSelected = false;
-                draggingPreb.SetActive(isSelected);
-                spriteRenderer.color = storeColor;
-            }
-            if(HasMouseMoved())
-            {
-                draggingPreb.transform.position = gridPos;
-                // Checking for available places to barrack
-                if (isplaceable)
+                if (HasMouseMoved())
                 {
+                    draggingPreb.transform.position = gridPos;
                     spriteRenderer.color = Color.green;
                 }
-                else
+                if (Input.GetMouseButtonDown(0))
                 {
-                    spriteRenderer.color = Color.red;
+                    CreateBarrack(gridPos);
+                    isSelected = false;
+                    draggingPreb.SetActive(isSelected);
+                    spriteRenderer.color = storeColor;
                 }
+            }
+            else
+            {
+                spriteRenderer.color = Color.red;
             }
         }
     }
@@ -117,18 +136,19 @@ public class Deneme : MonoBehaviour {
     void CreateSoldier(RaycastHit2D hit)
     {
         Vector2 emptySpot = hit.transform.position;
-        int x = (int)emptySpot.x + size / 2, y = (int)emptySpot.y + size / 2, i = 1, j = 1;
+        int x = Mathf.RoundToInt(emptySpot.x), y = Mathf.RoundToInt(emptySpot.y), i = 1, j = 1;
 
         bool isLooping = true;
         while (isLooping)
         {
             //Searching for around to barrack
+            //gridMap.GetNeighbours(gridMap.nodes[x, y]);
             for (int k = x - i; k < x + i + 1; k++)
             {
                 for (int l = y - j; l < y + j + 1; l++)
                 {
                     if (k >= 0 && l >= 0)
-                        if (cells[k, l] == 0)
+                    if (gridMap.nodes[k, l].walkable)
                         {
                             emptySpot = new Vector2(k, l);
                             isLooping = false;
@@ -141,9 +161,8 @@ public class Deneme : MonoBehaviour {
             j++;
 
         }
-        cells[(int)emptySpot.x, (int)emptySpot.y] = 1;
-        emptySpot.x -= size / 2;
-        emptySpot.y -= size / 2;
+        gridMap.nodes[Mathf.RoundToInt(emptySpot.x), Mathf.RoundToInt(emptySpot.y)].walkable = false;
+        tilemap.SetTile(new Vector3Int(Mathf.RoundToInt(emptySpot.x), Mathf.RoundToInt(emptySpot.y), 0), redGround);
         GameObject obj = Instantiate(SoldierPreb, emptySpot, Quaternion.identity);
         obj.transform.parent = grid.transform.GetChild(1);
     }
@@ -153,12 +172,15 @@ public class Deneme : MonoBehaviour {
     {
         GameObject _obj = Instantiate(barrackPreb, pos, Quaternion.identity);
         _obj.transform.parent = grid.transform.GetChild(1);
-        for (int i = -1; i < 2; i++)
+
+        List<Node> nodes = gridMap.GetNeighbours(gridMap.nodes[pos.x, pos.y]);
+        gridMap.nodes[pos.x, pos.y].walkable = false;
+        tilemap.SetTile(new Vector3Int(pos.x, pos.y, 0), redGround);
+        // Neighbours
+        foreach (var item in nodes)
         {
-            for (int j = -1; j < 2; j++)
-            {
-                cells[pos.x + i + size / 2, pos.y + j + size / 2] = 1;
-            }
+            tilemap.SetTile(new Vector3Int(item.gridX, item.gridY, 0), redGround);
+            item.walkable = false;
         }
     }
 
@@ -167,25 +189,26 @@ public class Deneme : MonoBehaviour {
     {
         int x = origin.x;
         int y = origin.y;
-
-        for (int i = x - 1; i < x + 2; i++)
+        if (x < 0 || y < 0 || x  >= mapSizeX || y  >= mapSizeY)
+            return false;
+        List<Node> nodes = gridMap.GetNeighbours(gridMap.nodes[x, y]);
+        if (nodes.Count != 8)
+            return false;
+        foreach (var item in nodes)
         {
-            for (int j = y - 1; j < y + 2; j++)
-            {
-                if (i + size / 2 >= 0 && j + size / 2 >= 0)
-                    if (cells[i + size / 2, j + size / 2] == 1)
-                        return false;
-            }
+            if (!item.walkable)
+                return false;
         }
+
         return true;
     }
 
     bool HasMouseMoved()
     {
         return 
-            (System.Math.Abs(Input.GetAxis("Mouse X")) > EPSILON) 
+            (System.Math.Abs(Input.GetAxis("Mouse X")) > 0) 
             ||
-            (System.Math.Abs(Input.GetAxis("Mouse Y")) > EPSILON)
+            (System.Math.Abs(Input.GetAxis("Mouse Y")) > 0)
             ;
     }
 }
