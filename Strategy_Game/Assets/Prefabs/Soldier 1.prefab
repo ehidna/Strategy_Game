@@ -39,7 +39,7 @@ GameObject:
   - component: {fileID: 114336430177570056}
   - component: {fileID: 114022118131887202}
   m_Layer: 0
-  m_Name: Soldier
+  m_Name: Soldier 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -149,7 +149,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f033fad8e66b4f69b8aeac5e4b735bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _name: Soldier
+  _name: Soldier1
   sprite: {fileID: 21300000, guid: 8d892900419084253a55196fe98a6287, type: 3}
   size: {x: 1, y: 1}
 --- !u!114 &114336430177570056
@@ -206,7 +206,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 8d892900419084253a55196fe98a6287, type: 3}
-  m_Color: {r: 0.8207547, g: 0.7659937, b: 0.18195976, a: 1}
+  m_Color: {r: 0.2264151, g: 0.21183008, b: 0.056603774, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

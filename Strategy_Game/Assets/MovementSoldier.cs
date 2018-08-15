@@ -3,10 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class MovementSoldier : MonoBehaviour {
-
-    private Deneme deneme;
-    Grid grid;
-
+    
     public float moveSpeed;
     public float rotSpeed;
     public float waitTime = 4f;
@@ -32,9 +29,7 @@ public class MovementSoldier : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         myTransform = transform;
-        deneme = FindObjectOfType<Deneme>();
         waiting = waitTime;
-        grid = deneme.grid;
 	}
 
     private void OnDrawGizmos()
@@ -78,21 +73,21 @@ public class MovementSoldier : MonoBehaviour {
 
     void Wander()
     {
-        Vector3Int gridPos = grid.WorldToCell(myTransform.position);
+        Vector3Int gridPos = InputManager.instance.grid.WorldToCell(myTransform.position);
         if (pathList == null)
         {
             Debug.Log("wanderstart");
-            deneme.gridMap.nodes[gridPos.x, gridPos.y].walkable = true;
-            deneme.tilemap.SetTile(new Vector3Int(gridPos.x, gridPos.y, 0), deneme.ground);
-            pathList = PathFinding.FindPath(deneme.gridMap,
+            InputManager.instance.gridMap.nodes[gridPos.x, gridPos.y].walkable = true;
+            InputManager.instance.tilemap.SetTile(new Vector3Int(gridPos.x, gridPos.y, 0), InputManager.instance.ground);
+            pathList = PathFinding.FindPath(InputManager.instance.gridMap,
                                             new Vector2Int(gridPos.x, gridPos.y),
                                             SetWanderSpot(new Vector2Int(gridPos.x, gridPos.y))
                                            );
             if (pathList != null && pathList.Count > 0)
             {
                 Vector2Int first = pathList[0];
-                deneme.gridMap.nodes[first.x, first.y].walkable = false;
-                deneme.tilemap.SetTile(new Vector3Int(first.x, first.y, 0), deneme.redGround);
+                InputManager.instance.gridMap.nodes[first.x, first.y].walkable = false;
+                InputManager.instance.tilemap.SetTile(new Vector3Int(first.x, first.y, 0), InputManager.instance.redGround);
                 direction = new Vector3(first.x, first.y, 0);
                 isRotating = true;
                 Vector2Int last = pathList[pathList.Count - 1];
@@ -106,20 +101,20 @@ public class MovementSoldier : MonoBehaviour {
                 if (pathList.Count > 1)
                 {
                     // Clear last passed tile to walkable
-                    deneme.gridMap.nodes[pathList[0].x, pathList[0].y].walkable = true;
-                    deneme.tilemap.SetTile(new Vector3Int(pathList[0].x, pathList[0].y, 0), deneme.ground);
+                    InputManager.instance.gridMap.nodes[pathList[0].x, pathList[0].y].walkable = true;
+                    InputManager.instance.tilemap.SetTile(new Vector3Int(pathList[0].x, pathList[0].y, 0), InputManager.instance.ground);
                     pathList.RemoveAt(0);
 
-                    if (deneme.gridMap.nodes[pathList[0].x, pathList[0].y].walkable)
+                    if (InputManager.instance.gridMap.nodes[pathList[0].x, pathList[0].y].walkable)
                     {
                         Vector2 v = pathList[0];
-                        deneme.gridMap.nodes[pathList[0].x, pathList[0].y].walkable = false;
-                        deneme.tilemap.SetTile(new Vector3Int(pathList[0].x, pathList[0].y, 0), deneme.redGround);
+                        InputManager.instance.gridMap.nodes[pathList[0].x, pathList[0].y].walkable = false;
+                        InputManager.instance.tilemap.SetTile(new Vector3Int(pathList[0].x, pathList[0].y, 0), InputManager.instance.redGround);
                         direction = new Vector3(v.x, v.y, 0);
                     }
                     else
                     {
-                        pathList = PathFinding.FindPath(deneme.gridMap,
+                        pathList = PathFinding.FindPath(InputManager.instance.gridMap,
                                             new Vector2Int(gridPos.x, gridPos.y),
                                                         new Vector2Int((int)destination.x, (int)destination.y)
                                            );
@@ -127,8 +122,8 @@ public class MovementSoldier : MonoBehaviour {
                         {
                             Vector2Int v = pathList[0];
                             direction = new Vector3(v.x, v.y, 0);
-                            deneme.gridMap.nodes[v.x, v.y].walkable = true;
-                            deneme.tilemap.SetTile(new Vector3Int(v.x, v.y, 0), deneme.ground);
+                            InputManager.instance.gridMap.nodes[v.x, v.y].walkable = true;
+                            InputManager.instance.tilemap.SetTile(new Vector3Int(v.x, v.y, 0), InputManager.instance.ground);
                         }
                     }
                 }
@@ -136,12 +131,12 @@ public class MovementSoldier : MonoBehaviour {
                 {
                     Debug.Log("isreached destination");
                     isReachedDestination = true;
-                    if (deneme.gridMap.nodes[gridPos.x, gridPos.y].walkable)
+                    if (InputManager.instance.gridMap.nodes[gridPos.x, gridPos.y].walkable)
                     {
                         Debug.Log("boom");
                     }
-                    deneme.gridMap.nodes[gridPos.x, gridPos.y].walkable = false;
-                    deneme.tilemap.SetTile(new Vector3Int(gridPos.x, gridPos.y, 0), deneme.redGround);
+                    InputManager.instance.gridMap.nodes[gridPos.x, gridPos.y].walkable = false;
+                    InputManager.instance.tilemap.SetTile(new Vector3Int(gridPos.x, gridPos.y, 0), InputManager.instance.redGround);
                     return;
                 }
             }
@@ -163,15 +158,16 @@ public class MovementSoldier : MonoBehaviour {
             i = Random.Range(-range, range + 1);
             j = Random.Range(-range, range + 1);
 
-            if ((i == 0 && j == 0) || i + pos.x < 0 || j + pos.y < 0 || i + pos.x >= deneme.mapSizeX || j + pos.y >= deneme.mapSizeY)
+            if ((i == 0 && j == 0) || i + pos.x < 0 || j + pos.y < 0 || i + pos.x >= InputManager.instance.mapSizeX || j + pos.y >= InputManager.instance.mapSizeY)
                 continue;
-            if (deneme.gridMap.nodes[i + pos.x, j + pos.y].walkable)
+            if (InputManager.instance.gridMap.nodes[i + pos.x, j + pos.y].walkable)
             {
                 validCount = 0;
                 break;
             }
             if(validCount == 0)
             {
+                isReachedDestination = true;
                 i = 0;
                 j = 0;
                 Debug.LogError("Didn't found any valid spot");

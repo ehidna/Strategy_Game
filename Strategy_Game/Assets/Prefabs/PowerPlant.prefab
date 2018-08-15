@@ -19,10 +19,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4500864656671144}
-  - component: {fileID: 114516237492649550}
+  - component: {fileID: 114187251321174670}
   m_Layer: 0
-  m_Name: Barrack
-  m_TagString: Building
+  m_Name: PowerPlant
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -70,7 +70,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1236033115758496}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -14.356792, y: -5.4175215, z: 0}
+  m_LocalPosition: {x: -10.11, y: 17.980942, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 4587590313655262}
@@ -150,14 +150,29 @@ BoxCollider2D:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
     oldSize: {x: 3, y: 3}
-    newSize: {x: 3, y: 3}
+    newSize: {x: 2, y: 3}
     adaptiveTilingThreshold: 0.5
     drawMode: 1
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 3, y: 3}
+  m_Size: {x: 2, y: 3}
   m_EdgeRadius: 0
+--- !u!114 &114187251321174670
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1236033115758496}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0bbc5b22f75a048659225be83d89de26, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _name: Power Plant
+  sprite: {fileID: 21300000, guid: e00e8d056b3934c91ab6847ee1c4bbe4, type: 3}
+  size: {x: 2, y: 3}
+  products: []
 --- !u!114 &114253374096677466
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -177,7 +192,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_text: Barrack
+  m_text: Power Plant
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: e73a58f6e2794ae7b1b7e50b7fb811b0, type: 2}
@@ -204,8 +219,8 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 7
-  m_fontSizeBase: 2
+  m_fontSize: 6.6
+  m_fontSizeBase: 6.93
   m_fontWeight: 400
   m_enableAutoSizing: 1
   m_fontSizeMin: 2
@@ -245,12 +260,12 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 0}
-    characterCount: 7
+    characterCount: 11
     spriteCount: 0
-    spaceCount: 0
-    wordCount: 1
+    spaceCount: 1
+    wordCount: 2
     linkCount: 0
-    lineCount: 1
+    lineCount: 2
     pageCount: 1
     materialCount: 1
   m_havePropertiesChanged: 1
@@ -271,31 +286,6 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   m_maskType: 0
---- !u!114 &114516237492649550
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1236033115758496}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fb7e3f6eca4ff48eb9861253bb3be030, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _name: Barrack
-  sprite: {fileID: 21300000, guid: e00e8d056b3934c91ab6847ee1c4bbe4, type: 3}
-  size: {x: 3, y: 3}
-  products:
-  - {fileID: 1448486509638420, guid: 0550bddc7ae7a4d3a97ae89c1685d13f, type: 2}
-  - {fileID: 1448486509638420, guid: 3a487ada8e0ad493bb8f2bd41bc1e6ae, type: 2}
-  - {fileID: 1448486509638420, guid: b32500d4cc9b04370952c2890abd3734, type: 2}
-  - {fileID: 1448486509638420, guid: 0550bddc7ae7a4d3a97ae89c1685d13f, type: 2}
-  - {fileID: 1448486509638420, guid: 0550bddc7ae7a4d3a97ae89c1685d13f, type: 2}
-  - {fileID: 1448486509638420, guid: 0550bddc7ae7a4d3a97ae89c1685d13f, type: 2}
-  - {fileID: 1448486509638420, guid: 0550bddc7ae7a4d3a97ae89c1685d13f, type: 2}
-  - {fileID: 1448486509638420, guid: 0550bddc7ae7a4d3a97ae89c1685d13f, type: 2}
-  - {fileID: 1448486509638420, guid: 0550bddc7ae7a4d3a97ae89c1685d13f, type: 2}
-  - {fileID: 1448486509638420, guid: 0550bddc7ae7a4d3a97ae89c1685d13f, type: 2}
 --- !u!212 &212229359527800154
 SpriteRenderer:
   m_ObjectHideFlags: 1
@@ -332,11 +322,11 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: e00e8d056b3934c91ab6847ee1c4bbe4, type: 3}
-  m_Color: {r: 0.5, g: 0.08254716, b: 0.08254716, a: 1}
+  m_Color: {r: 0.9811321, g: 0.95553356, b: 0.16197933, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 1
-  m_Size: {x: 3, y: 3}
+  m_Size: {x: 2, y: 3}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -365,5 +355,5 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 3, y: 3}
+  m_SizeDelta: {x: 2, y: 3}
   m_Pivot: {x: 0.5, y: 0.5}
