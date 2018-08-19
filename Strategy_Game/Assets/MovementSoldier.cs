@@ -6,25 +6,26 @@ public class MovementSoldier : MonoBehaviour {
     
     public float moveSpeed;
     public float rotSpeed;
-    public float waitTime = 4f;
+    public float waitTime = 1f;
     public int range = 3;
     private float waiting;
 
-    [SerializeField]
     private bool isWandering;
-
-    [SerializeField]
     private bool isReachedDestination;
-
-    [SerializeField]
     private bool isRotating;
 
-    Vector3 destination;
     Vector3 direction;
 
     Transform myTransform;
 
-    List<Vector2Int> pathList;
+    List<Vector3Int> pathList;
+    List<Node> neighbours = new List<Node>();
+
+    Node node;
+
+    public Vector3 target;
+    private Vector3Int gridPos;
+
 
 	// Use this for initialization
 	void Start () {
@@ -37,143 +38,134 @@ public class MovementSoldier : MonoBehaviour {
         if (pathList != null && pathList.Count != 0)
         {
             Gizmos.color = Color.red;
-            Vector2Int v2 = pathList[pathList.Count - 1];
-            Gizmos.DrawLine(myTransform.position, new Vector3(v2.x, v2.y, 0));
+            Gizmos.DrawLine(myTransform.position, pathList[pathList.Count -1]);
         }
     }
 
     // Update is called once per frame
     void Update()
     {
-
         if (isWandering)
         {
+            if (target == -Vector3.one)
+            {
+                isWandering = false;
+                return;
+            }
             if (isReachedDestination)
             {
                 direction = Vector3.zero;
-                destination = Vector3.zero;
                 isWandering = false;
                 pathList = null;
+                target = Vector3.zero;
+                InputManager.instance.gridMap.nodes[gridPos.x, gridPos.y].isWalkable = false;
+                InputManager.instance.tilemap.SetTile(gridPos, InputManager.instance.redGround);
+                return;
+            }
+            if (target == Vector3.zero)
+            {
+                isWandering = false;
                 return;
             }
             Wander();
         }
+    }
+
+    public void StartMovement()
+    {
+        StartCoroutine(ConstructWait());    
+    }
+
+    IEnumerator ConstructWait()
+    {
+        yield return new WaitForSeconds(1);
+        isWandering = true;
+    }
+
+    void SetTarget(Vector3Int pos, Vector3Int targetPos){
+        node = InputManager.instance.gridMap.nodes[pos.x, pos.y];
+        if (neighbours == null)
+        {
+            neighbours = new List<Node>();
+        }
+        InputManager.instance.gridMap.GetNeighbours(node, ref neighbours);
+        if (neighbours.Count == 0)
+            return;
+        node = InputManager.instance.gridMap.nodes[targetPos.x, targetPos.y];
+        if(!node.isWalkable)
+        {
+            InputManager.instance.gridMap.GetValidNeighbour(ref node);
+        }
+        targetPos = new Vector3Int(node.gridX, node.gridY, 0);
+        PathFinding.FindPath(InputManager.instance.gridMap,
+                                        pos,
+                                        targetPos,
+                                        ref pathList
+                                       );
+        
+        InputManager.instance.gridMap.nodes[pos.x, pos.y].isWalkable = true;
+        InputManager.instance.tilemap.SetTile(pos, InputManager.instance.ground);
+
+        if (pathList != null && pathList.Count > 0)
+        {
+            direction = pathList[0];
+            isRotating = true;
+        }
         else
         {
-            waiting -= Time.deltaTime;
-            if (waiting <= 0)
-            {
-                isWandering = true;
-                waiting = waitTime;
-                isReachedDestination = false;
-            }
+            pathList = null;
+            isReachedDestination = true;
         }
-
     }
 
     void Wander()
     {
-        Vector3Int gridPos = InputManager.instance.grid.WorldToCell(myTransform.position);
+        gridPos = InputManager.instance.grid.WorldToCell(myTransform.position);
         if (pathList == null)
         {
-            Debug.Log("wanderstart");
-            InputManager.instance.gridMap.nodes[gridPos.x, gridPos.y].walkable = true;
-            InputManager.instance.tilemap.SetTile(new Vector3Int(gridPos.x, gridPos.y, 0), InputManager.instance.ground);
-            pathList = PathFinding.FindPath(InputManager.instance.gridMap,
-                                            new Vector2Int(gridPos.x, gridPos.y),
-                                            SetWanderSpot(new Vector2Int(gridPos.x, gridPos.y))
-                                           );
-            if (pathList != null && pathList.Count > 0)
-            {
-                Vector2Int first = pathList[0];
-                InputManager.instance.gridMap.nodes[first.x, first.y].walkable = false;
-                InputManager.instance.tilemap.SetTile(new Vector3Int(first.x, first.y, 0), InputManager.instance.redGround);
-                direction = new Vector3(first.x, first.y, 0);
-                isRotating = true;
-                Vector2Int last = pathList[pathList.Count - 1];
-                destination = new Vector3(last.x, last.y, 0);
-            }
+            SetTarget(gridPos, new Vector3Int(
+                Mathf.RoundToInt(target.x),
+                Mathf.RoundToInt(target.y),
+                0
+            ));
         }
         else
         {
-            if (Vector3.Distance(myTransform.position, direction) <= 0f)
+            if ( Vector3.Distance(myTransform.position, direction) <= 0f)
             {
                 if (pathList.Count > 1)
                 {
+                    node = InputManager.instance.gridMap.nodes[pathList[0].x, pathList[0].y];
+                    if (neighbours == null)
+                    {
+                        neighbours = new List<Node>();
+                    }
+                    InputManager.instance.gridMap.GetNeighbours(node, ref neighbours);
+                    if (neighbours.Count == 0)
+                        return;
                     // Clear last passed tile to walkable
-                    InputManager.instance.gridMap.nodes[pathList[0].x, pathList[0].y].walkable = true;
-                    InputManager.instance.tilemap.SetTile(new Vector3Int(pathList[0].x, pathList[0].y, 0), InputManager.instance.ground);
+                    node.isWalkable = true;
+                    InputManager.instance.tilemap.SetTile(pathList[0], InputManager.instance.ground);
                     pathList.RemoveAt(0);
 
-                    if (InputManager.instance.gridMap.nodes[pathList[0].x, pathList[0].y].walkable)
+                    node = InputManager.instance.gridMap.nodes[pathList[0].x, pathList[0].y];
+                    if (node.isWalkable)
                     {
-                        Vector2 v = pathList[0];
-                        InputManager.instance.gridMap.nodes[pathList[0].x, pathList[0].y].walkable = false;
-                        InputManager.instance.tilemap.SetTile(new Vector3Int(pathList[0].x, pathList[0].y, 0), InputManager.instance.redGround);
-                        direction = new Vector3(v.x, v.y, 0);
+                        node.isWalkable = false;
+                        InputManager.instance.tilemap.SetTile(pathList[0], InputManager.instance.redGround);
+                        direction = pathList[0];
                     }
                     else
-                    {
-                        pathList = PathFinding.FindPath(InputManager.instance.gridMap,
-                                            new Vector2Int(gridPos.x, gridPos.y),
-                                                        new Vector2Int((int)destination.x, (int)destination.y)
-                                           );
-                        if (pathList!=null && pathList.Count > 0)
-                        {
-                            Vector2Int v = pathList[0];
-                            direction = new Vector3(v.x, v.y, 0);
-                            InputManager.instance.gridMap.nodes[v.x, v.y].walkable = true;
-                            InputManager.instance.tilemap.SetTile(new Vector3Int(v.x, v.y, 0), InputManager.instance.ground);
-                        }
-                    }
+                        pathList = null;
                 }
                 else
                 {
-                    Debug.Log("isreached destination");
                     isReachedDestination = true;
-                    if (InputManager.instance.gridMap.nodes[gridPos.x, gridPos.y].walkable)
-                    {
-                        Debug.Log("boom");
-                    }
-                    InputManager.instance.gridMap.nodes[gridPos.x, gridPos.y].walkable = false;
-                    InputManager.instance.tilemap.SetTile(new Vector3Int(gridPos.x, gridPos.y, 0), InputManager.instance.redGround);
                     return;
                 }
-            }
-            myTransform.position = Vector3.MoveTowards(myTransform.position, direction, moveSpeed * Time.deltaTime);
+            }// distance check
+            myTransform.position = Vector2.MoveTowards(myTransform.position, direction, moveSpeed * Time.deltaTime);
         }
 
-    }
-
-
-    Vector2Int SetWanderSpot(Vector2Int pos)
-    {
-        int i = 0, j = 0;
-
-        int validCount = 10;
-        while (validCount > 0)
-        {
-            validCount--;
-            //Searching for around to barrack
-            i = Random.Range(-range, range + 1);
-            j = Random.Range(-range, range + 1);
-
-            if ((i == 0 && j == 0) || i + pos.x < 0 || j + pos.y < 0 || i + pos.x >= InputManager.instance.mapSizeX || j + pos.y >= InputManager.instance.mapSizeY)
-                continue;
-            if (InputManager.instance.gridMap.nodes[i + pos.x, j + pos.y].walkable)
-            {
-                validCount = 0;
-                break;
-            }
-            if(validCount == 0)
-            {
-                isReachedDestination = true;
-                i = 0;
-                j = 0;
-                Debug.LogError("Didn't found any valid spot");
-            }
-        }
-
-        return new Vector2Int(i + pos.x, j + pos.y);
     }
 }

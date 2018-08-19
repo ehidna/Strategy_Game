@@ -69,10 +69,8 @@ public class GridMap{
     /// </summary>
     /// <param name="node">Node to get neighbors for.</param>
     /// <returns>List of node neighbors.</returns>
-    public List<Node> GetNeighbours(Node node)
+    public void GetNeighbours(Node node, ref List<Node> neighbours)
     {
-        List<Node> neighbours = new List<Node>();
-
         int x = 0, y = 0;
 
         for (x = -1; x <= 1; x++)
@@ -82,8 +80,60 @@ public class GridMap{
                 AddNodeNeighbour(x, y, node, neighbours);
             }
         }
+    }
 
-        return neighbours;
+    /// <summary>
+    /// Get valid neighbor of a given tile in the grid.
+    /// </summary>
+    /// <param name="node">Node to get neighbor for.</param>
+    public void GetValidNeighbour(ref Node node)
+    {
+        List<Node> neighbours = new List<Node>();
+        GetNeighbours(node, ref neighbours);
+
+        for (int k = 0; k < neighbours.Count; k++)
+            if (neighbours[k].isWalkable)
+            {
+                node = neighbours[k];
+                return;
+            }
+        float x =1, y = 1;
+        int count = 2;
+
+        int size;
+        if (gridSizeX > gridSizeY)
+            size = gridSizeX;
+        else
+            size = gridSizeY;
+        
+        for (int i = count; i < size; i++)
+        {
+            for (int m = -count; m <= count; m++)
+            {
+                for (int n = -count; n <= count; n++)
+                {
+                    if (m < 0)
+                        x *= -m;
+                    if (n < 0)
+                        y *= -m;
+                    if ((x + y) < count)
+                        continue;
+                    if (
+                        (m + node.gridX) < 0 || (n + node.gridY) < 0
+                    ||
+                        (m + node.gridX) >= gridSizeX || (n + node.gridY) >= gridSizeY
+                    )
+                        continue;
+                    if (nodes[m + node.gridX, n + node.gridY].isWalkable)
+                    {
+                        
+                        node = nodes[m + node.gridX, n + node.gridY];
+                        return;
+                    }
+                }
+            }
+            count++;
+        }
     }
 
     /// <summary>

@@ -5,19 +5,16 @@ using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
-    
+    private const string strBuild = "Buildings";
+
     //Singleton
     public static UIManager instance;
     void Awake()
     {
         if (instance == null)
-        {
             instance = this;
-        }
         else
-        {
-            Destroy(this);
-        }
+            Destroy(this.gameObject);
     }
 
     public bool showSelectedBuildingProduct;
@@ -70,13 +67,11 @@ public class UIManager : MonoBehaviour
                 continue;
             Entity[] ent = new Entity[build.products.Length];
             for (int j = 0; j < build.products.Length; j++)
-            {
                 ent[j] = build.products[j].GetComponent<Entity>();
-            }
             entities.Add(build._name, ent);
 
         }
-        entities.Add("Buildings", bEntity);
+        entities.Add(strBuild, bEntity);
     }
 
     void LoadBuilding(GameObject uiObj, Entity entity)
@@ -107,62 +102,72 @@ public class UIManager : MonoBehaviour
 
     public void ShowBuildings()
     {
-        Entity[] items = entities["Buildings"];
+        if (selectedBuilding == null)
+            return;
+        Entity[] items = entities[strBuild];
 
         for (int i = 0; i < produceMenuItems.Count; i++)
-        {
             if (i >= items.Length)
-            {
                 produceMenuItems[i].SetActive(false);
-            }
             else
             {
                 LoadBuilding(produceMenuItems[i], items[i]);
                 produceMenuItems[i].SetActive(true);
             }
-        }
 
         producePanel.gameObject.SetActive(true);
         InformationHolder.gameObject.SetActive(false);
         showSelectedBuildingProduct = false;
+        selectedBuilding = null;
     }
 
     public void ShowSelectedBuildingProduce(Entity building)
     {
+        InputManager.instance.CheckFlag(building);
+        if(selectedBuilding != null && string.Equals(selectedBuilding._name, building._name))
+        {
+            selectedBuilding = building;
+            return;
+        }
+        //showSelectedBuildingProduct |= selectedBuilding == null;
         selectedBuilding = building;
 
         if (entities.ContainsKey(building._name))
         {
             Entity[] items = entities[building._name];
-
             if (produceMenuItems.Count < items.Length)
-            {
                 for (int i = 0; i < items.Length - produceMenuItems.Count; i++)
                 {
                     GameObject go = Instantiate(entityItemUI);
                     go.transform.SetParent(producePanel.transform);
                     produceMenuItems.Add(go);
                 }
-            }
 
-            for (int i = 0; i < produceMenuItems.Count; i++)
+            if (items.Length > 0)
             {
-                if (i >= items.Length)
+                for (int i = 0; i < produceMenuItems.Count; i++)
                 {
-                    produceMenuItems[i].SetActive(false);
+                    if (i >= items.Length)
+                        produceMenuItems[i].SetActive(false);
+                    else
+                    {
+                        produceMenuItems[i].SetActive(true);
+                        LoadProduct(produceMenuItems[i], items[i]);
+                    }
                 }
-                else
-                {
-                    LoadProduct(produceMenuItems[i], items[i]);
-                }
+                producePanel.gameObject.SetActive(true);
+                SetContentInformation(building);
+                showSelectedBuildingProduct = true;
             }
-
+            else
+            {
+                
+                producePanel.gameObject.SetActive(false);
+                showSelectedBuildingProduct = false;
+                SetContentInformation(building);
+            }
         }
 
-        producePanel.gameObject.SetActive(true);
-        SetContentInformation(building);
-
-        showSelectedBuildingProduct = true;
     }
 
     public void SelectBuilding(GameObject building)

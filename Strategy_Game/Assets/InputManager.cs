@@ -16,28 +16,32 @@ public class InputManager : MonoBehaviour {
         }
         else
         {
-            Destroy(this);
+            Destroy(this.gameObject);
         }
     }
-    
+
     public Grid grid;
     public GridMap gridMap;
     public TileBase ground;
     public TileBase redGround;
+    public TileBase flag;
     private SpriteRenderer spriteRenderer;
-    private Color storeColor = Color.white;
+    private Color storedColor = Color.white;
 
-    bool isSelected;
+    bool isBuildingPicked;
 
     public int mapSizeX;
     public int mapSizeY;
 
     [HideInInspector]
     public Tilemap tilemap;
+    private Tilemap foreGroundTM;
 
     public GameObject draggingPreb;
     private GameObject buildingPreb;
     private Transform selectedBuilding;
+
+    Vector3 offs = new Vector3();
 
     // Use this for initialization
     void Start () {
@@ -45,6 +49,7 @@ public class InputManager : MonoBehaviour {
         Camera.main.transform.position = new Vector3(mapSizeX / 2, mapSizeY / 2, -10);
 
         tilemap = grid.GetComponentInChildren<Tilemap>();
+        foreGroundTM = grid.transform.GetChild(1).GetComponent<Tilemap>();
 
         draggingPreb.SetActive(false);
         spriteRenderer = draggingPreb.GetComponentInChildren<SpriteRenderer>();
@@ -58,15 +63,14 @@ public class InputManager : MonoBehaviour {
         // set true all tiles to walkable
         bool[,] tilesMap = new bool[mapSizeX, mapSizeY];
         for (int i = 0; i < mapSizeX; i++)
-        {
             for (int j = 0; j < mapSizeY; j++)
             {
                 tilemap.SetTile(new Vector3Int(i, j, 0), ground);
                 tilesMap[i, j] = true;
             }
-        }
         gridMap = new GridMap(tilesMap);
     }
+
 
     // Update is called once per frame
     void Update()
@@ -74,17 +78,15 @@ public class InputManager : MonoBehaviour {
         // If mouse around UI simply return
         if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
             return;
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector3Int gridPos = grid.WorldToCell(mousePos);
-        mousePos.z = 0;
 
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mousePos.z = 0;
+        mousePos.x = Mathf.RoundToInt(mousePos.x);
+        mousePos.y = Mathf.RoundToInt(mousePos.y);
+        Vector3Int gridPos = grid.WorldToCell(mousePos);
         // No building selected
-        if (!isSelected)
+        if (!isBuildingPicked)
         {
-            if(Input.GetMouseButtonDown(1))
-            {
-                UIManager.instance.ShowBuildings();
-            }
             // Produce soldier to best nearest fit place to the barrack
             if (Input.GetMouseButtonDown(0))
             {
@@ -95,12 +97,31 @@ public class InputManager : MonoBehaviour {
                     selectedBuilding = hit.transform.parent;
                     UIManager.instance.ShowSelectedBuildingProduce(selectedBuilding.GetComponent<Entity>());
                 }
+                else
+                {
+                    foreGroundTM.ClearAllTiles();
+                    UIManager.instance.ShowBuildings();
+                }
+            }
+            if (Input.GetMouseButtonDown(1))
+            {
+                foreGroundTM.ClearAllTiles();
+                selectedBuilding.GetComponent<Barrack>().spawnTarget = gridPos;
+                foreGroundTM.SetTile(gridPos, flag);
             }
         }
         else
         {
-            // Checking for available places to buildings
+            // stay bottom left of to the building for mouse
             bool isplaceable = CheckNeighbor(gridPos);
+
+            gridPos += new Vector3Int(
+                Mathf.FloorToInt(offs.x),
+                Mathf.FloorToInt(offs.y),
+                0
+            );
+
+            // Checking for available places to buildings
             if (isplaceable)
             {
                 if (HasMouseMoved())
@@ -111,9 +132,9 @@ public class InputManager : MonoBehaviour {
                 if (Input.GetMouseButtonDown(0))
                 {
                     CreateBarrack(gridPos);
-                    isSelected = false;
-                    draggingPreb.SetActive(isSelected);
-                    spriteRenderer.color = storeColor;
+                    isBuildingPicked = false;
+                    draggingPreb.SetActive(isBuildingPicked);
+                    spriteRenderer.color = storedColor;
                 }
             }
             else
@@ -125,56 +146,49 @@ public class InputManager : MonoBehaviour {
 
     public void CreateSoldier(GameObject soldier)
     {
-        //TODO: need spawn point and rally point
+        Vector3Int buildingPos = grid.WorldToCell(selectedBuilding.position);
+        Vector3 flagTarget = selectedBuilding.GetComponent<Barrack>().spawnTarget;
 
-        Vector2 emptySpot = selectedBuilding.transform.position;
-        int x = Mathf.RoundToInt(emptySpot.x), y = Mathf.RoundToInt(emptySpot.y), i = 1, j = 1;
+        Node node = new Node(false, buildingPos.x, buildingPos.y);
+        gridMap.GetValidNeighbour(ref node);
+        buildingPos = new Vector3Int(node.gridX, node.gridY, 0);
 
-        bool isLooping = true;
-        while (isLooping)
-        {
-            //Searching for around to barrack
-            //gridMap.GetNeighbours(gridMap.nodes[x, y]);
-            for (int k = x - i; k < x + i + 1; k++)
-            {
-                for (int l = y - j; l < y + j + 1; l++)
-                {
-                    //if (k >= 0 && l >= 0)
-                    if (k > 1 && l > 1 && k < mapSizeX && l < mapSizeY)
-                        if (gridMap.nodes[k, l].walkable)
-                        {
-                            emptySpot = new Vector2(k, l);
-                            isLooping = false;
-                            break;
-                        }
-                }
-            }
+        gridMap.nodes[buildingPos.x, buildingPos.y].isWalkable = false;
+        tilemap.SetTile(buildingPos, redGround);
 
-            i++;
-            j++;
+        GameObject obj = Instantiate(soldier, buildingPos, Quaternion.identity);
+        MovementSoldier movementSoldier = obj.GetComponent<MovementSoldier>();
+        movementSoldier.target = flagTarget;
+        movementSoldier.StartMovement();
 
-        }
-        gridMap.nodes[Mathf.RoundToInt(emptySpot.x), Mathf.RoundToInt(emptySpot.y)].walkable = false;
-        tilemap.SetTile(new Vector3Int(Mathf.RoundToInt(emptySpot.x), Mathf.RoundToInt(emptySpot.y), 0), redGround);
-        GameObject obj = Instantiate(soldier, emptySpot, Quaternion.identity);
         obj.transform.parent = grid.transform.GetChild(1);
     }
 
     // GameObject obj, Vector3Int pos, int width, int height
     void CreateBarrack(Vector3Int pos)
     {
-        //TODO: need to change dynamick sizes and get rid off foreach loop
+        Entity entity = buildingPreb.GetComponent<Entity>();
         GameObject _obj = Instantiate(buildingPreb, pos, Quaternion.identity);
         _obj.transform.parent = grid.transform.GetChild(1);
 
-        List<Node> nodes = gridMap.GetNeighbours(gridMap.nodes[pos.x, pos.y]);
-        gridMap.nodes[pos.x, pos.y].walkable = false;
-        tilemap.SetTile(new Vector3Int(pos.x, pos.y, 0), redGround);
-        // Neighbours
-        foreach (var item in nodes)
+        Barrack barrack = entity.GetComponent<Barrack>();
+        if (barrack != null)
         {
-            tilemap.SetTile(new Vector3Int(item.gridX, item.gridY, 0), redGround);
-            item.walkable = false;
+            barrack.spawnTarget = -Vector3.one;
+        }
+        pos -= new Vector3Int(
+                Mathf.FloorToInt(offs.x),
+                Mathf.FloorToInt(offs.y),
+                0
+            );
+
+        for (int i = 0; i < entity.size.x; i++)
+        {
+            for (int j = 0; j < entity.size.y; j++)
+            {
+                tilemap.SetTile(new Vector3Int(pos.x + i, pos.y + j, 0), redGround);
+                gridMap.nodes[pos.x + i, pos.y + j].isWalkable = false;
+            }
         }
 
         UIManager.instance.InformationHolder.gameObject.SetActive(false); // Close Information UI
@@ -182,35 +196,41 @@ public class InputManager : MonoBehaviour {
     }
 
     //Checking to square of origin if it is true available to build
-    bool CheckNeighbor(Vector3Int origin)
+    bool CheckNeighbor(Vector3Int bottomleft)
     {
-        int x = origin.x;
-        int y = origin.y;
+        Entity entity = buildingPreb.GetComponent<Entity>();
+        int x = bottomleft.x;
+        int y = bottomleft.y;
         if (
-            x < 0         || y < 0 ||
-            x >= mapSizeX || y >= mapSizeY
+            x <= 0 || y <= 0 ||
+            x + entity.size.x - 2 > mapSizeX || y + entity.size.y - 2 > mapSizeY
             ||
-            !gridMap.nodes[x, y].walkable
-           )
+            !gridMap.nodes[x, y].isWalkable
+        )
             return false;
-        List<Node> nodes = gridMap.GetNeighbours(gridMap.nodes[x, y]);
-        if (nodes.Count != 8)
-            return false;
-        foreach (var item in nodes)
+        for (int i = 0; i < entity.size.x; i++)
         {
-            if (!item.walkable)
-                return false;
+            for (int j = 0; j < entity.size.y; j++)
+            {
+                if (i == 0 && j == 0)
+                    continue;
+                if (!gridMap.nodes[x + i, y + j].isWalkable)
+                {
+                    return false;
+                }
+            }
         }
-
         return true;
     }
 
     public void SelectedBuilding(Entity building)
     {
-        buildingPreb = building.gameObject;
 
+        buildingPreb = building.gameObject;
+        offs = new Vector3(building.size.x / 2, building.size.y / 2, 0);
         spriteRenderer.sprite = building.sprite;
         spriteRenderer.size = building.size;
+
 
         building.GetComponentInChildren<BoxCollider2D>().size = building.size;
 
@@ -218,11 +238,31 @@ public class InputManager : MonoBehaviour {
         text.rectTransform.sizeDelta = building.size;
         text.text = building._name;
 
-        storeColor = building.GetComponentInChildren<SpriteRenderer>().color;
-        isSelected = true;
+        storedColor = building.GetComponentInChildren<SpriteRenderer>().color;
+        isBuildingPicked = true;
 
-        draggingPreb.SetActive(isSelected);
+        draggingPreb.SetActive(isBuildingPicked);
 
+    }
+
+    public void CheckFlag(Entity building)
+    {
+        if (buildingPreb != null)
+        {
+            foreGroundTM.ClearAllTiles();
+            Barrack barrack = building.GetComponent<Barrack>();
+            if (barrack != null)
+            {
+                if (barrack.spawnTarget != -Vector3.one)
+                {
+                    Vector3Int vector3Int = new Vector3Int(
+                        Mathf.RoundToInt(barrack.spawnTarget.x),
+                        Mathf.RoundToInt(barrack.spawnTarget.y),
+                        0);
+                    foreGroundTM.SetTile(vector3Int, flag);
+                }
+            }
+        }
     }
 
     bool HasMouseMoved()

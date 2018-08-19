@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class PathFinding
+public static class PathFinding
 {
     /// <summary>
     /// Find a path between two points.
@@ -10,23 +10,21 @@ public class PathFinding
     /// <param name="startPos">Starting position.</param>
     /// <param name="targetPos">Ending position.</param>
     /// <returns>List of points that represent the path to walk.</returns>
-    public static List<Vector2Int> FindPath(GridMap gridMap, Vector2Int startPos, Vector2Int targetPos)
+    public static void FindPath(GridMap gridMap, Vector3Int startPos, Vector3Int targetPos,ref List<Vector3Int> vector3Ints)
     {
-        if (startPos == targetPos)
-            return null;
         // find path
-        List<Node> nodes_path = _ImpFindPath(gridMap, startPos, targetPos);
-
+        List<Node> nodes_path = new List<Node>();
+        _ImpFindPath(gridMap, startPos, targetPos, ref nodes_path);
         // convert to a list of points and return
-        List<Vector2Int> ret = new List<Vector2Int>();
-        if (nodes_path != null)
+        List<Vector3Int> ret = new List<Vector3Int>();
+        if (nodes_path == null)
+            vector3Ints = null;
+        for (int i = 0; i < nodes_path.Count; i++)
         {
-            foreach (Node node in nodes_path)
-            {
-                ret.Add(new Vector2Int(node.gridX, node.gridY));
-            }
+            ret.Add(new Vector3Int(nodes_path[i].gridX, nodes_path[i].gridY, 0));
         }
-        return ret;
+
+        vector3Ints = ret;
     }
 
     /// <summary>
@@ -35,8 +33,8 @@ public class PathFinding
     /// <param name="gridMap">Grid to search.</param>
     /// <param name="startPos">Starting position.</param>
     /// <param name="targetPos">Ending position.</param>
-    /// <returns>List of grid nodes that represent the path to walk.</returns>
-    private static List<Node> _ImpFindPath(GridMap gridMap, Vector2Int startPos, Vector2Int targetPos)
+    /// <param name="nodes">List of grid nodes that represent the path to walk.</param>
+    private static void _ImpFindPath(GridMap gridMap, Vector3Int startPos, Vector3Int targetPos, ref List<Node> nodes)
     {
         Node startNode = gridMap.nodes[startPos.x, startPos.y];
         Node targetNode = gridMap.nodes[targetPos.x, targetPos.y];
@@ -45,9 +43,12 @@ public class PathFinding
         HashSet<Node> closedSet = new HashSet<Node>();
         openSet.Add(startNode);
 
+        Node currentNode;
+        List<Node> neighbour = new List<Node>();
+
         while (openSet.Count > 0)
         {
-            Node currentNode = openSet[0];
+            currentNode = openSet[0];
             for (int i = 1; i < openSet.Count; i++)
             {
                 if (openSet[i].fCost < currentNode.fCost || openSet[i].fCost == currentNode.fCost && openSet[i].hCost < currentNode.hCost)
@@ -61,30 +62,30 @@ public class PathFinding
 
             if (currentNode == targetNode)
             {
-                return RetracePath(startNode, targetNode);
+                RetracePath(startNode, targetNode, ref nodes);
+                return;
             }
 
-            foreach (Node neighbour in gridMap.GetNeighbours(currentNode))
+            gridMap.GetNeighbours(currentNode, ref neighbour);
+            for (int i = 0; i < neighbour.Count; i++)
             {
-                if (!neighbour.walkable || closedSet.Contains(neighbour))
+                if (!neighbour[i].isWalkable || closedSet.Contains(neighbour[i]))
                 {
                     continue;
                 }
 
-                int newMovementCostToNeighbour = currentNode.gCost + GetDistance(currentNode, neighbour);
-                if (newMovementCostToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
+                int newMovementCostToNeighbour = currentNode.gCost + GetDistance(currentNode, neighbour[i]);
+                if (newMovementCostToNeighbour < neighbour[i].gCost || !openSet.Contains(neighbour[i]))
                 {
-                    neighbour.gCost = newMovementCostToNeighbour;
-                    neighbour.hCost = GetDistance(neighbour, targetNode);
-                    neighbour.parent = currentNode;
+                    neighbour[i].gCost = newMovementCostToNeighbour;
+                    neighbour[i].hCost = GetDistance(neighbour[i], targetNode);
+                    neighbour[i].parent = currentNode;
 
-                    if (!openSet.Contains(neighbour))
-                        openSet.Add(neighbour);
+                    if (!openSet.Contains(neighbour[i]))
+                        openSet.Add(neighbour[i]);
                 }
             }
         }
-
-        return null;
     }
 
     /// <summary>
@@ -92,8 +93,8 @@ public class PathFinding
     /// </summary>
     /// <param name="startNode">Starting node.</param>
     /// <param name="endNode">Ending (target) node.</param>
-    /// <returns>Retraced path between nodes.</returns>
-    private static List<Node> RetracePath(Node startNode, Node endNode)
+    /// <param name="nodes">Retraced path between nodes.</param>
+    private static void RetracePath(Node startNode, Node endNode, ref List<Node> nodes)
     {
         List<Node> path = new List<Node>();
         Node currentNode = endNode;
@@ -104,7 +105,7 @@ public class PathFinding
             currentNode = currentNode.parent;
         }
         path.Reverse();
-        return path;
+        nodes = path;
     }
 
     /// <summary>

@@ -167,9 +167,8 @@ MonoBehaviour:
   rotSpeed: 2
   waitTime: 10
   range: 10
-  isWandering: 0
-  isReachedDestination: 0
-  isRotating: 0
+  target: {x: 0, y: 0, z: 0}
+  rb: {fileID: 50958735151501890}
 --- !u!212 &212086981711401802
 SpriteRenderer:
   m_ObjectHideFlags: 1

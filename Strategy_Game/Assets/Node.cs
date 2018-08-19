@@ -1,7 +1,7 @@
 ﻿public class Node {
 
     // is this node walkable?
-    public bool walkable;
+    public bool isWalkable;
     public int gridX;
     public int gridY;
 
@@ -18,7 +18,7 @@
     /// <param name="_gridY">Node y index.</param>
     public Node(bool _walkable, int _gridX, int _gridY)
     {
-        walkable = _walkable;
+        isWalkable = _walkable;
         gridX = _gridX;
         gridY = _gridY;
     }
@@ -31,7 +31,7 @@
     /// <param name="_gridY">Node y index.</param>
     public void Update(bool _walkable, int _gridX, int _gridY)
     {
-        walkable = _walkable;
+        isWalkable = _walkable;
         gridX = _gridX;
         gridY = _gridY;
     }
