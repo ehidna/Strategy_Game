@@ -36,6 +36,13 @@ public class UIManager : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        ScrollRect scroll = producePanel.transform.root.GetComponentInChildren<ScrollRect>();
+    //    scroll.horizontalNormalizedPosition = 0f;
+    //// if your scroller is meant to go up and down
+        //scroll.verticalNormalizedPosition = 0f;
+        if (scroll == null)
+            Debug.Log("boom");
+
         ObjectPoolItem ObjectPoolItem = new ObjectPoolItem
         {
             objectToPool = entityItemUI,
