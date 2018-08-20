@@ -36,11 +36,30 @@ public class UIManager : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        ObjectPoolItem ObjectPoolItem = new ObjectPoolItem
+        {
+            objectToPool = entityItemUI,
+            poolName = entityItemUI.name,
+            amountToPool = 20,
+            shouldExpand = true
+        };
+        for (int i = 0; i < ObjectPoolItem.amountToPool; i++)
+        {
+            ObjectPooler.Instance.CreatePooledObject(ObjectPoolItem);
+            //obj.transform.SetParent(producePanel.transform);
+        }
+
+        ObjectPooler.Instance.itemsToPool.Add(ObjectPoolItem);
+
         informationMenuBuilding = InformationHolder.transform.GetChild(0);
         informationMenuProduct = InformationHolder.transform.GetChild(1);
         LoadProduceMenu();
-    }
 
+
+    }
+    /// <summary>
+    /// First initializeing  Produce menu with buildings object
+    /// </summary>
     void LoadProduceMenu()
     {
         entities = new Dictionary<string, Entity[]>();
@@ -56,10 +75,10 @@ public class UIManager : MonoBehaviour
             GameObject obj = buildings[i].gameObject;
             bEntity[i] = obj.GetComponent<Entity>();
 
-            GameObject go = Instantiate(entityItemUI);
+            GameObject go = ObjectPooler.Instance.GetPooledObject(entityItemUI.name);
             go.transform.SetParent(producePanel.transform);
             produceMenuItems.Add(go);
-
+            go.SetActive(true);
             LoadBuilding(go, bEntity[i]);
 
             Buildings build = obj.GetComponent<Buildings>();
@@ -73,7 +92,11 @@ public class UIManager : MonoBehaviour
         }
         entities.Add(strBuild, bEntity);
     }
-
+    /// <summary>
+    /// Setting parameters of button and adding click event for building
+    /// </summary>
+    /// <param name="uiObj">Ui button element</param>
+    /// <param name="entity">Getting entity of object</param>
     void LoadBuilding(GameObject uiObj, Entity entity)
     {
         Button button = uiObj.GetComponent<Button>();
@@ -86,7 +109,11 @@ public class UIManager : MonoBehaviour
         uiObj.GetComponentInChildren<Image>().sprite = entity.sprite;
         uiObj.GetComponentInChildren<Text>().text = entity._name;
     }
-
+    /// <summary>
+    /// Setting parameters of button and adding click event for soldiers or products
+    /// </summary>
+    /// <param name="uiObj">Ui button element</param>
+    /// <param name="entity">Getting entity of object</param>
     void LoadProduct(GameObject uiObj, Entity entity)
     {
         Button button = uiObj.GetComponent<Button>();
@@ -99,7 +126,9 @@ public class UIManager : MonoBehaviour
         uiObj.GetComponentInChildren<Image>().sprite = entity.sprite;
         uiObj.GetComponentInChildren<Text>().text = entity._name;
     }
-
+    /// <summary>
+    /// Showing buildings on menu
+    /// </summary>
     public void ShowBuildings()
     {
         if (selectedBuilding == null)
@@ -120,7 +149,10 @@ public class UIManager : MonoBehaviour
         showSelectedBuildingProduct = false;
         selectedBuilding = null;
     }
-
+    /// <summary>
+    /// Showing selected building products
+    /// </summary>
+    /// <param name="building">Getting entity of object</param>
     public void ShowSelectedBuildingProduce(Entity building)
     {
         InputManager.instance.CheckFlag(building);
@@ -129,7 +161,6 @@ public class UIManager : MonoBehaviour
             selectedBuilding = building;
             return;
         }
-        //showSelectedBuildingProduct |= selectedBuilding == null;
         selectedBuilding = building;
 
         if (entities.ContainsKey(building._name))
@@ -138,7 +169,7 @@ public class UIManager : MonoBehaviour
             if (produceMenuItems.Count < items.Length)
                 for (int i = 0; i < items.Length - produceMenuItems.Count; i++)
                 {
-                    GameObject go = Instantiate(entityItemUI);
+                    GameObject go = ObjectPooler.Instance.GetPooledObject(entityItemUI.name);
                     go.transform.SetParent(producePanel.transform);
                     produceMenuItems.Add(go);
                 }
@@ -146,7 +177,6 @@ public class UIManager : MonoBehaviour
             if (items.Length > 0)
             {
                 for (int i = 0; i < produceMenuItems.Count; i++)
-                {
                     if (i >= items.Length)
                         produceMenuItems[i].SetActive(false);
                     else
@@ -154,14 +184,13 @@ public class UIManager : MonoBehaviour
                         produceMenuItems[i].SetActive(true);
                         LoadProduct(produceMenuItems[i], items[i]);
                     }
-                }
+
                 producePanel.gameObject.SetActive(true);
                 SetContentInformation(building);
                 showSelectedBuildingProduct = true;
             }
             else
             {
-                
                 producePanel.gameObject.SetActive(false);
                 showSelectedBuildingProduct = false;
                 SetContentInformation(building);
@@ -169,7 +198,10 @@ public class UIManager : MonoBehaviour
         }
 
     }
-
+    /// <summary>
+    /// Button click event for buildings
+    /// </summary>
+    /// <param name="building">Building object</param>
     public void SelectBuilding(GameObject building)
     {
         Entity build = building.GetComponent<Entity>();
@@ -177,13 +209,19 @@ public class UIManager : MonoBehaviour
         InputManager.instance.SelectedBuilding(build);
     }
 
+    /// <summary>
+    /// Button click event for products
+    /// </summary>
+    /// <param name="product">Product object</param>
     public void SelectProduct(GameObject product)
     {
         Entity build = product.GetComponent<Entity>();
         SetContentInformation(build);
         InputManager.instance.CreateSoldier(product);
     }
-
+    /// <summary>
+    /// Setting content sizes to different aspects. Main is 1080, 720.
+    /// </summary>
     void SetContentSizes()
     {
         float width = producePanel.rect.width;
@@ -192,10 +230,12 @@ public class UIManager : MonoBehaviour
         InformationHolder.cellSize = new Vector2(width, width);
         InformationHolder.gameObject.SetActive(false);
     }
-
+    /// <summary>
+    /// Setting parameters of information menu
+    /// </summary>
+    /// <param name="item">Getting entity of object</param>
     void SetContentInformation(Entity item)
     {
-
         if (showSelectedBuildingProduct)
         {
             informationMenuProduct.GetComponentInChildren<Text>().text = item._name;
@@ -211,8 +251,6 @@ public class UIManager : MonoBehaviour
             buildingInformation.GetComponentInChildren<Text>().text = item._name;
         }
 
-
         InformationHolder.gameObject.SetActive(true);
     }
-
 }

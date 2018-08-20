@@ -169,7 +169,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bbc5b22f75a048659225be83d89de26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _name: Power Plant
+  _name: PowerPlant
   sprite: {fileID: 21300000, guid: e00e8d056b3934c91ab6847ee1c4bbe4, type: 3}
   size: {x: 2, y: 3}
   products: []

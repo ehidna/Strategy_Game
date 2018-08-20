@@ -1,10 +1,12 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class InputManager : MonoBehaviour {
-
+public class InputManager : MonoBehaviour
+{
+    //Singleton
     public static InputManager instance;
 
     // Use this for initialization
@@ -20,15 +22,17 @@ public class InputManager : MonoBehaviour {
         }
     }
 
+    Vector3 InvalidPosition = Vector3.negativeInfinity;
+
     public Grid grid;
     public GridMap gridMap;
     public TileBase ground;
     public TileBase redGround;
     public TileBase flag;
-    private SpriteRenderer spriteRenderer;
-    private Color storedColor = Color.white;
+
 
     bool isBuildingPicked;
+    private bool SelectedObject;
 
     public int mapSizeX;
     public int mapSizeY;
@@ -41,13 +45,23 @@ public class InputManager : MonoBehaviour {
     private GameObject buildingPreb;
     private Transform selectedBuilding;
 
+    public Material defaultMaterial;
+    public Material selectionMaterial;
+    private SpriteRenderer spriteRenderer;
+    private Color storedColor = Color.white;
+
     Vector3 offs = new Vector3();
 
-    // Use this for initialization
-    void Start () {
-        Application.targetFrameRate = 60;
-        Camera.main.transform.position = new Vector3(mapSizeX / 2, mapSizeY / 2, -10);
+    private List<MovementSoldier> takingOrderSoldiers;
 
+    // Use this for initialization
+    void Start()
+    {
+        Application.targetFrameRate = 60;
+        CameraScript cameraS = Camera.main.transform.GetComponent<CameraScript>();
+        cameraS.limitX = mapSizeX;
+        cameraS.limitY = mapSizeY;
+        cameraS.transform.position = new Vector3(mapSizeX / 2, mapSizeY / 2, -10);
         tilemap = grid.GetComponentInChildren<Tilemap>();
         foreGroundTM = grid.transform.GetChild(1).GetComponent<Tilemap>();
 
@@ -57,7 +71,9 @@ public class InputManager : MonoBehaviour {
         tilemap.ClearAllTiles();
         SetTiles();
     }
-
+    /// <summary>
+    /// Setting all tiles on grid with mapsizes.
+    /// </summary>
     void SetTiles()
     {
         // set true all tiles to walkable
@@ -87,34 +103,19 @@ public class InputManager : MonoBehaviour {
         // No building selected
         if (!isBuildingPicked)
         {
-            // Produce soldier to best nearest fit place to the barrack
             if (Input.GetMouseButtonDown(0))
             {
-                RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
-
-                if (hit.collider != null && hit.transform.parent.CompareTag("Building"))
-                {
-                    selectedBuilding = hit.transform.parent;
-                    UIManager.instance.ShowSelectedBuildingProduce(selectedBuilding.GetComponent<Entity>());
-                }
-                else
-                {
-                    foreGroundTM.ClearAllTiles();
-                    UIManager.instance.ShowBuildings();
-                }
+                LeftMouseClick(mousePos);
             }
             if (Input.GetMouseButtonDown(1))
             {
-                foreGroundTM.ClearAllTiles();
-                selectedBuilding.GetComponent<Barrack>().spawnTarget = gridPos;
-                foreGroundTM.SetTile(gridPos, flag);
+                RightMouseClick(gridPos);
             }
         }
         else
         {
             // stay bottom left of to the building for mouse
             bool isplaceable = CheckNeighbor(gridPos);
-
             gridPos += new Vector3Int(
                 Mathf.FloorToInt(offs.x),
                 Mathf.FloorToInt(offs.y),
@@ -126,7 +127,13 @@ public class InputManager : MonoBehaviour {
             {
                 if (HasMouseMoved())
                 {
-                    draggingPreb.transform.position = gridPos;
+                    Vector3 calPos = gridPos;
+                    calPos += new Vector3(
+                            offs.x % 1,
+                            offs.y % 1,
+                            0
+                        );
+                    draggingPreb.transform.position = calPos;
                     spriteRenderer.color = Color.green;
                 }
                 if (Input.GetMouseButtonDown(0))
@@ -143,7 +150,10 @@ public class InputManager : MonoBehaviour {
             }
         }
     }
-
+    /// <summary>
+    /// Creating soldiers on selected barrack.
+    /// </summary>
+    /// <param name="soldier">Soldier gameobject.</param>
     public void CreateSoldier(GameObject soldier)
     {
         Vector3Int buildingPos = grid.WorldToCell(selectedBuilding.position);
@@ -156,20 +166,33 @@ public class InputManager : MonoBehaviour {
         gridMap.nodes[buildingPos.x, buildingPos.y].isWalkable = false;
         tilemap.SetTile(buildingPos, redGround);
 
-        GameObject obj = Instantiate(soldier, buildingPos, Quaternion.identity);
+        GameObject obj = ObjectPooler.Instance.GetPooledObject(soldier.name);
+        obj.transform.position = buildingPos;
+        obj.SetActive(true);
         MovementSoldier movementSoldier = obj.GetComponent<MovementSoldier>();
         movementSoldier.target = flagTarget;
         movementSoldier.StartMovement();
-
-        obj.transform.parent = grid.transform.GetChild(1);
     }
 
-    // GameObject obj, Vector3Int pos, int width, int height
+    /// <summary>
+    /// Create selected barrack on buildings menu
+    /// </summary>
+    /// <param name="pos">World position to gridmap position.</param>
     void CreateBarrack(Vector3Int pos)
     {
         Entity entity = buildingPreb.GetComponent<Entity>();
-        GameObject _obj = Instantiate(buildingPreb, pos, Quaternion.identity);
-        _obj.transform.parent = grid.transform.GetChild(1);
+
+        // because of origin issue 2 and folds
+        Vector3 calPos = pos;
+        calPos += new Vector3(
+                offs.x % 1,
+                offs.y % 1,
+                0
+        );
+
+        GameObject _obj = ObjectPooler.Instance.GetPooledObject(buildingPreb.name);
+        _obj.transform.position = calPos;
+        _obj.SetActive(true);
 
         Barrack barrack = entity.GetComponent<Barrack>();
         if (barrack != null)
@@ -195,7 +218,10 @@ public class InputManager : MonoBehaviour {
 
     }
 
-    //Checking to square of origin if it is true available to build
+    /// <summary>
+    /// Checking to square of origin if it is true available to build
+    /// </summary>
+    /// <param name="bottomleft">bottom left to the building position</param>
     bool CheckNeighbor(Vector3Int bottomleft)
     {
         Entity entity = buildingPreb.GetComponent<Entity>();
@@ -222,12 +248,29 @@ public class InputManager : MonoBehaviour {
         }
         return true;
     }
-
+    /// <summary>
+    /// Calculating position offsets and assigning parameters 
+    /// </summary>
+    /// <param name="building">Entity component of building</param>
     public void SelectedBuilding(Entity building)
     {
-
         buildingPreb = building.gameObject;
+
         offs = new Vector3(building.size.x / 2, building.size.y / 2, 0);
+
+        // because of origin issue 2 and folds
+        if ((int)building.size.x % 2 == 0)
+        {
+            offs.x -= 0.5f;
+        }
+        else
+            offs.x = Mathf.FloorToInt(offs.x);
+        if ((int)building.size.y % 2 == 0)
+        {
+            offs.y -= 0.5f;
+        }
+        else
+            offs.y = Mathf.FloorToInt(offs.y);
         spriteRenderer.sprite = building.sprite;
         spriteRenderer.size = building.size;
 
@@ -244,7 +287,10 @@ public class InputManager : MonoBehaviour {
         draggingPreb.SetActive(isBuildingPicked);
 
     }
-
+    /// <summary>
+    /// Adding rally point for barracks
+    /// </summary>
+    /// <param name="building">Entity component of building</param>
     public void CheckFlag(Entity building)
     {
         if (buildingPreb != null)
@@ -264,13 +310,127 @@ public class InputManager : MonoBehaviour {
             }
         }
     }
-
+    /// <summary>
+    /// Checking to mouse has moved or not
+    /// </summary>
     bool HasMouseMoved()
     {
-        return 
-            (System.Math.Abs(Input.GetAxis("Mouse X")) > 0) 
+        return
+            (System.Math.Abs(Input.GetAxis("Mouse X")) > 0)
             ||
             (System.Math.Abs(Input.GetAxis("Mouse Y")) > 0)
             ;
+    }
+
+    /// <summary>
+    /// Checking inside of map to the mouse events
+    /// </summary>
+    public bool MouseInBounds()
+    {
+        //Screen coordinates start in the lower-left corner of the screen
+        //not the top-left of the screen like the drawing coordinates do
+        Vector3 mousePos = Input.mousePosition;
+        // Map is between %25 and %75 of width
+        bool insideWidth = mousePos.x >= Screen.width * 0.25f && mousePos.x <= Screen.width * 0.75f;
+        bool insideHeight = mousePos.y >= 0 && mousePos.y <= Screen.height;
+        return insideWidth && insideHeight;
+    }
+    /// <summary>
+    /// Left mouse click. Checking hit points of collider, is soldier or building?
+    /// </summary>
+    /// <param name="mousePos">Mouse position on grid map</param>
+    private void LeftMouseClick(Vector2 mousePos)
+    {
+        if (MouseInBounds())
+        {
+            GameObject hitObject = FindHitObject(mousePos);
+            Vector3 hitPoint = FindHitPoint(mousePos);
+            if (takingOrderSoldiers != null && takingOrderSoldiers.Count > 0)
+                for (int i = 0; i < takingOrderSoldiers.Count; i++)
+                    takingOrderSoldiers[i].GetComponentInChildren<SpriteRenderer>().material = defaultMaterial;
+
+            takingOrderSoldiers = null;
+            if (hitObject && hitPoint != InvalidPosition && hitObject.CompareTag("Soldier"))
+            {
+                MovementSoldier soldierMovement = hitObject.GetComponent<MovementSoldier>();
+                if (soldierMovement)
+                {   
+                    if(takingOrderSoldiers == null)
+                        takingOrderSoldiers = new List<MovementSoldier>();
+                    takingOrderSoldiers.Add(soldierMovement);
+                    soldierMovement.GetComponentInChildren<SpriteRenderer>().material = selectionMaterial;
+                }
+            }
+            else if (hitObject && hitPoint != InvalidPosition && hitObject.CompareTag("Building"))
+            {
+                selectedBuilding = hitObject.transform;
+                UIManager.instance.ShowSelectedBuildingProduce(selectedBuilding.GetComponent<Entity>());
+                return;
+            }
+
+            foreGroundTM.ClearAllTiles();
+            UIManager.instance.ShowBuildings();
+            selectedBuilding = null;
+        }
+    }
+
+    /// <summary>
+    /// Mouse Right Click. if building selected than set rally point,
+    /// If soldiers selected than set target position and enable Movement of soldiers.
+    /// </summary>
+    /// <param name="mousePos">Mouse position on grid map</param>
+    private void RightMouseClick(Vector3Int mousePos)
+    {
+        if (MouseInBounds())
+        {
+            if ((takingOrderSoldiers == null || takingOrderSoldiers.Count == 0) && selectedBuilding != null)
+            {
+                foreGroundTM.ClearAllTiles();
+                selectedBuilding.GetComponent<Barrack>().spawnTarget = mousePos;
+                foreGroundTM.SetTile(mousePos, flag);
+            }
+            else
+            {
+                foreGroundTM.ClearAllTiles();
+                if ((takingOrderSoldiers != null && takingOrderSoldiers.Count > 0))
+                {
+                    
+                    for (int i = 0; i < takingOrderSoldiers.Count; i++)
+                    {
+                        takingOrderSoldiers[i].target = mousePos;
+                        takingOrderSoldiers[i].enabled = true;
+                        takingOrderSoldiers[i].StartMovement();
+                    }
+                    foreGroundTM.SetTile(mousePos, redGround);
+                }
+            }
+        }
+    }
+    /// <summary>
+    /// Finding hit point 
+    /// </summary>
+    /// <param name="mousePos">Mouse position on grid map</param>
+    private Vector3 FindHitPoint(Vector2 mousePos)
+    {
+
+        RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
+        if (hit.collider != null)
+        {
+            return hit.point;
+        }
+        return InvalidPosition;
+    }
+    /// <summary>
+    /// Finding hit point of object.
+    /// </summary>
+    /// <param name="mousePos">Mouse position on grid map</param>
+    private GameObject FindHitObject(Vector2 mousePos)
+    {
+        RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
+        if (hit.collider != null)
+        {
+            return hit.collider.transform.parent.gameObject;
+        }
+        return null;
     }
 }

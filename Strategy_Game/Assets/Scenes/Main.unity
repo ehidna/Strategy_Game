@@ -370,6 +370,7 @@ GameObject:
   - component: {fileID: 519420032}
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
+  - component: {fileID: 519420030}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -384,6 +385,33 @@ AudioListener:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 519420028}
   m_Enabled: 1
+--- !u!114 &519420030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abeb63d6e16f94b3e944a3daade41bbd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lastTab: 0
+  movementSettingsFoldout: 0
+  mapLimitSettingsFoldout: 0
+  inputSettingsFoldout: 0
+  useFixedUpdate: 0
+  keyboardMovementSpeed: 5
+  screenEdgeMovementSpeed: 3
+  limitMap: 1
+  limitX: 25
+  limitY: 25
+  useScreenEdgeInput: 1
+  screenEdgeBorder: 25
+  useKeyboardInput: 1
+  horizontalAxis: Horizontal
+  verticalAxis: Vertical
+  useKeyboardZooming: 1
 --- !u!20 &519420031
 Camera:
   m_ObjectHideFlags: 0
@@ -512,7 +540,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 128.512, y: -128}
+  m_AnchoredPosition: {x: 153.10999, y: -128}
   m_SizeDelta: {x: 256, y: 256}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &587814249
@@ -599,9 +627,9 @@ TilemapRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 241037413
-  m_SortingLayer: 1
-  m_SortingOrder: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: -1
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
   m_MaxChunkCount: 16
@@ -975,7 +1003,7 @@ GameObject:
   - component: {fileID: 1146311012}
   - component: {fileID: 1146311014}
   m_Layer: 5
-  m_Name: Panel
+  m_Name: EntityItemUIPool
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1543,7 +1571,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 128.512, y: -384}
+  m_AnchoredPosition: {x: 153.10999, y: -384}
   m_SizeDelta: {x: 256, y: 256}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1819373196
@@ -1578,6 +1606,7 @@ GameObject:
   - component: {fileID: 1826508767}
   - component: {fileID: 1826508766}
   - component: {fileID: 1826508768}
+  - component: {fileID: 1826508769}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -1604,6 +1633,8 @@ MonoBehaviour:
   mapSizeY: 100
   tilemap: {fileID: 0}
   draggingPreb: {fileID: 1564721576}
+  defaultMaterial: {fileID: 2100000, guid: e6c721502e3c241a6878b2d7cf694a1c, type: 2}
+  selectionMaterial: {fileID: 2100000, guid: 00f96bfe2575843efafcce6038996714, type: 2}
 --- !u!4 &1826508767
 Transform:
   m_ObjectHideFlags: 0
@@ -1656,6 +1687,45 @@ MonoBehaviour:
     type: 2}
   producePanel: {fileID: 1146311010}
   InformationHolder: {fileID: 1566003724}
+--- !u!114 &1826508769
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1826508765}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28be146e09cda46ce90107ecc42059f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rootPoolName: Pooled Objects
+  pooledObjects: []
+  itemsToPool:
+  - objectToPool: {fileID: 1236033115758496, guid: d34be5236e3dc4a10b598124af129d4e,
+      type: 2}
+    poolName: Barrack
+    amountToPool: 5
+    shouldExpand: 1
+  - objectToPool: {fileID: 1236033115758496, guid: 440a1ddc27fe74fd9b6cbd8d897fe3ad,
+      type: 2}
+    poolName: PowerPlant
+    amountToPool: 5
+    shouldExpand: 1
+  - objectToPool: {fileID: 1448486509638420, guid: 0550bddc7ae7a4d3a97ae89c1685d13f,
+      type: 2}
+    poolName: Soldier
+    amountToPool: 20
+    shouldExpand: 1
+  - objectToPool: {fileID: 1448486509638420, guid: 3a487ada8e0ad493bb8f2bd41bc1e6ae,
+      type: 2}
+    poolName: Soldier1
+    amountToPool: 20
+    shouldExpand: 1
+  - objectToPool: {fileID: 1448486509638420, guid: b32500d4cc9b04370952c2890abd3734,
+      type: 2}
+    poolName: Soldier2
+    amountToPool: 20
+    shouldExpand: 1
 --- !u!1 &1830266691
 GameObject:
   m_ObjectHideFlags: 0

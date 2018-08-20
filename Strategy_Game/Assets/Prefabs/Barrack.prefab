@@ -296,6 +296,7 @@ MonoBehaviour:
   - {fileID: 1448486509638420, guid: 0550bddc7ae7a4d3a97ae89c1685d13f, type: 2}
   - {fileID: 1448486509638420, guid: 0550bddc7ae7a4d3a97ae89c1685d13f, type: 2}
   - {fileID: 1448486509638420, guid: 0550bddc7ae7a4d3a97ae89c1685d13f, type: 2}
+  spawnTarget: {x: 0, y: 0, z: 0}
 --- !u!212 &212229359527800154
 SpriteRenderer:
   m_ObjectHideFlags: 1
